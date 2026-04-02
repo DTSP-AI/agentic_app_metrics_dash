@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { getSupabase } from './supabase';
+import { signOutMW } from './mw-supabase';
 
 interface AuthContextValue {
   session: Session | null;
@@ -65,7 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    await Promise.all([
+      supabase.auth.signOut(),
+      signOutMW(),
+    ]);
     setSession(null);
     window.location.href = '/login';
   }, [supabase]);

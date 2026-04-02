@@ -1,4 +1,4 @@
-import { getSupabase } from './supabase';
+import { getMWAccessToken } from './mw-supabase';
 import { appConfig } from './config';
 
 const API_URL = appConfig.apiUrl;
@@ -57,15 +57,16 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 async function _doRefreshToken(): Promise<Record<string, string>> {
   try {
-    const supabase = getSupabase();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      _cachedToken = session.access_token;
-      _tokenExpiry = (session.expires_at ?? 0) * 1000 - 60_000;
+    // Use MW Supabase JWT for backend API calls (MW backend validates against its own Supabase)
+    const token = await getMWAccessToken();
+    if (token) {
+      _cachedToken = token;
+      // Cache for 55 minutes (MW tokens last ~60min)
+      _tokenExpiry = Date.now() + 55 * 60 * 1000;
       return { Authorization: `Bearer ${_cachedToken}` };
     }
   } catch {
-    // Supabase not available
+    // MW Supabase not available
   }
   _cachedToken = null;
   _tokenExpiry = 0;

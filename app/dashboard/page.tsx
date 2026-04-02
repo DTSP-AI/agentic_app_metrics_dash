@@ -7,19 +7,21 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
-  BarChart3, Calculator, TrendingUp, Sparkles,
+  BarChart3, Calculator, TrendingUp, Sparkles, Settings,
   Shield, Loader2, LogOut,
 } from 'lucide-react';
 import UsageTracker from '@/components/UsageTracker';
 import MeetingCalc from '@/components/MeetingCalc';
 import RevenueProjections from '@/components/RevenueProjections';
 import PricingOptimizer from '@/components/PricingOptimizer';
+import MetricsDelete from '@/components/MetricsDelete';
 
 const TABS = [
   { id: 'usage', label: 'Usage Tracker', icon: BarChart3 },
   { id: 'calculator', label: 'Unit Economics', icon: Calculator },
   { id: 'projections', label: 'Revenue Projections', icon: TrendingUp },
   { id: 'pricing', label: 'Pricing Optimizer', icon: Sparkles },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -144,6 +146,7 @@ export default function DashboardPage() {
         {activeTab === 'calculator' && <MeetingCalc />}
         {activeTab === 'projections' && <RevenueProjections />}
         {activeTab === 'pricing' && <PricingOptimizer />}
+        {activeTab === 'settings' && <MetricsDelete />}
       </main>
     </div>
   );

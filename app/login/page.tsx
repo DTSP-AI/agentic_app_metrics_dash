@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/auth';
 import { appConfig } from '@/lib/config';
+import { signInToMW } from '@/lib/mw-supabase';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, LogIn } from 'lucide-react';
@@ -25,11 +26,18 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
+
+    // Sign into dashboard Supabase (auth, profiles, dashboard data)
     const result = await signInWithEmail(email, password);
     if (result.error) {
       setError(result.error);
       setSubmitting(false);
+      return;
     }
+
+    // Also sign into MW Supabase (JWT for backend API calls)
+    // Non-blocking — if MW auth fails, dashboard still works but API tabs won't load
+    signInToMW(email, password).catch(() => {});
     // On success, onAuthStateChange fires and the useEffect redirects
   };
 
