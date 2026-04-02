@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth';
 import { appConfig } from '@/lib/config';
-import { checkAdminRole } from '@/lib/api';
+import { getSupabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -36,9 +36,20 @@ export default function DashboardPage() {
       router.replace('/login');
       return;
     }
-    checkAdminRole()
-      .then((r) => setIsAdmin(r.is_admin))
-      .catch(() => setIsAdmin(false));
+    // Check admin status from our own profiles table (not the backend API)
+    const supabase = getSupabase();
+    supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(data.is_admin);
+        }
+      });
   }, [userId, authLoading, router]);
 
   // Loading state
