@@ -24,30 +24,34 @@ create unique index idx_profiles_email on public.profiles (email);
 -- RLS
 alter table public.profiles enable row level security;
 
+-- Security definer function to check admin status without triggering RLS recursion.
+-- SECURITY DEFINER bypasses RLS, so querying profiles here won't re-enter policies.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer set search_path = ''
+stable
+as $$
+  select coalesce(
+    (select is_admin from public.profiles where id = auth.uid()),
+    false
+  );
+$$;
+
 -- Users can read their own profile
 create policy "Users can read own profile"
   on public.profiles for select
   using (auth.uid() = id);
 
--- Admins can read all profiles
+-- Admins can read all profiles (uses security definer to avoid recursion)
 create policy "Admins can read all profiles"
   on public.profiles for select
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.is_admin = true
-    )
-  );
+  using (public.is_admin());
 
--- Only admins can update profiles
+-- Only admins can update profiles (uses security definer to avoid recursion)
 create policy "Admins can update profiles"
   on public.profiles for update
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.is_admin = true
-    )
-  );
+  using (public.is_admin());
 
 -- Auto-create profile on user signup
 create or replace function public.handle_new_user()
